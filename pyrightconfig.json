@@ -1,0 +1,8 @@
+{
+  "venvPath": "/home/babi/Área de trabalho/media-mvp",
+  "venv": ".venv",
+  "reportMissingImports": true,
+  "executionEnvironments": [
+    { "root": ".", "extraPaths": ["."] }
+  ]
+}
