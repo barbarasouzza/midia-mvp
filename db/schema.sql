@@ -1,5 +1,17 @@
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS "user" (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin','user')) DEFAULT 'user',
+  person_id INTEGER,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_user_username ON "user"(username);
+
+
 CREATE TABLE IF NOT EXISTS person (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,

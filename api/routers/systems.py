@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from ..core.db import get_db
-from ..core.deps import require_api_key
+from ..core.deps import require_auth
 from ..core.errors import ErrorResponse
 from .. import schemas
 from ..models import systems as systems_model
@@ -12,15 +12,20 @@ router = APIRouter(prefix="/systems", tags=["systems"])
     "",
     response_model=schemas.SystemOut,
     response_model_exclude_none=True,
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Criar sistema",
     responses={
         401: {"model": ErrorResponse, "description": "Unauthorized"},
         409: {"model": ErrorResponse, "description": "Sistema já existe"},
         422: {"model": ErrorResponse, "description": "Erro de validação"},
     },
+    openapi_extra={
+        "requestBody": {
+            "content": {"application/json": {"example": {"name": "SIGA"}}}
+        }
+    },
 )
-def create_system(s: schemas.SystemIn = schemas.SystemIn.model_validate({"name": "SIGA"})):
+def create_system(s: schemas.SystemIn):
     db = get_db()
     return systems_model.create(db, s.name)
 
@@ -38,7 +43,7 @@ def list_systems():
     "/{sid}",
     response_model=schemas.SystemOut,
     response_model_exclude_none=True,
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Atualizar sistema",
     responses={
         401: {"model": ErrorResponse, "description": "Unauthorized"},
@@ -52,7 +57,7 @@ def update_system(sid: int, s: schemas.SystemIn):
 
 @router.delete(
     "/{sid}",
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Excluir sistema",
     responses={
         200: {"description": "OK"},
