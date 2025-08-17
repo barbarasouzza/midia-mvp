@@ -4,6 +4,7 @@ __pycache__/
 .env
 
 app.db
+cookie.txt
 
 frontend/node_modules/
 frontend/dist/

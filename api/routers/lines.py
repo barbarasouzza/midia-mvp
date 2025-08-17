@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
 from ..core.db import get_db
-from ..core.deps import require_api_key
+from ..core.deps import require_auth
 from ..core.errors import ErrorResponse
 from .. import schemas
 from ..models import lines as lines_model
@@ -12,17 +12,12 @@ router = APIRouter(prefix="/lines", tags=["lines"])
     "",
     response_model=schemas.LineOut,
     response_model_exclude_none=True,
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Criar linha",
-    responses={
-        401: {"model": ErrorResponse, "description": "Unauthorized"},
-        409: {"model": ErrorResponse, "description": "Linha já existe"},
-        422: {"model": ErrorResponse, "description": "Erro de validação"},
-    },
 )
-def create_line(l: schemas.LineIn = schemas.LineIn.model_validate({"name": "Educação"})):
+def create_line(l: schemas.LineIn):
     db = get_db()
-    return lines_model.create(db, l.name)
+    return lines_model.create(db, l.name, l.system_id)
 
 @router.get(
     "",
@@ -38,21 +33,17 @@ def list_lines():
     "/{lid}",
     response_model=schemas.LineOut,
     response_model_exclude_none=True,
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Atualizar linha",
-    responses={
-        401: {"model": ErrorResponse, "description": "Unauthorized"},
-        404: {"model": ErrorResponse, "description": "Linha não encontrada"},
-        409: {"model": ErrorResponse, "description": "Linha já existe"},
-    },
 )
 def update_line(lid: int, l: schemas.LineIn):
     db = get_db()
-    return lines_model.update(db, lid, l.name)
+    return lines_model.update(db, lid, l.name, l.system_id)
+
 
 @router.delete(
     "/{lid}",
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Excluir linha",
     responses={
         200: {"description": "OK"},

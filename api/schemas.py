@@ -1,6 +1,7 @@
-from pydantic import BaseModel, HttpUrl, Field
+# schemas.py (Pydantic v2)
 from typing import Optional, List, Literal
 from datetime import date
+from pydantic import BaseModel, HttpUrl, Field, ConfigDict
 
 # --- Pessoas ---
 class PersonIn(BaseModel):
@@ -13,9 +14,13 @@ class PersonOut(PersonIn):
 # --- Linhas ---
 class LineIn(BaseModel):
     name: str
+    system_id: Optional[int] = None
 
-class LineOut(LineIn):
+class LineOut(BaseModel):
     id: int
+    name: str
+    system_id: Optional[int] = None
+    system_name: Optional[str] = None
 
 # --- Sistemas ---
 class SystemIn(BaseModel):
@@ -37,18 +42,12 @@ class MediaIn(BaseModel):
     description: Optional[str] = None
     platform: Platform
     url: HttpUrl
-    published_at: date
-    line_id: Optional[int] = None
+    published_at: date                  # será serializado como "YYYY-MM-DD"
+    line_id: Optional[int] = None       # ausente/None = sem vínculo
     system_id: Optional[int] = None
     people: List[MediaPersonLink] = Field(default_factory=list)
 
-class MediaOut(BaseModel):
+class MediaOut(MediaIn):
     id: int
-    title: str
-    description: Optional[str]
-    platform: Platform
-    url: str
-    published_at: str
-    line_id: Optional[int]
-    system_id: Optional[int]
-    people: List[MediaPersonLink] = []
+    # Se você retornar objetos/rows, isso ajuda a montar a resposta:
+    model_config = ConfigDict(from_attributes=True)

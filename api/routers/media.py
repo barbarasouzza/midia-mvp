@@ -1,14 +1,15 @@
+# routers/media.py
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 from ..core.db import get_db
-from ..core.deps import require_api_key
+from ..core.deps import require_auth
 from ..core.errors import ErrorResponse
 from .. import schemas
 from ..models import media as media_model
 
 router = APIRouter(prefix="/media", tags=["media"])
 
-create_example = schemas.MediaIn.model_validate({
+create_example = {
     "title": "Live de Abertura",
     "description": "Evento anual",
     "platform": "youtube",
@@ -16,22 +17,23 @@ create_example = schemas.MediaIn.model_validate({
     "published_at": "2025-08-10",
     "line_id": 1,
     "system_id": 1,
-    "people": [{"person_id": 1, "role": "responsavel"}]
-})
+    "people": [{"person_id": 1, "role": "responsavel"}],
+}
 
 @router.post(
     "",
     response_model=schemas.MediaOut,
     response_model_exclude_none=True,
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Criar mídia",
     responses={
         401: {"model": ErrorResponse, "description": "Unauthorized"},
         409: {"model": ErrorResponse, "description": "Conflito de integridade (UNIQUE/CHECK)"},
         422: {"model": ErrorResponse, "description": "Erro de validação"},
     },
+    openapi_extra={"requestBody": {"content": {"application/json": {"example": create_example}}}},
 )
-def create_media(m: schemas.MediaIn = create_example):
+def create_media(m: schemas.MediaIn):
     db = get_db()
     return media_model.create(db, m)
 
@@ -40,9 +42,7 @@ def create_media(m: schemas.MediaIn = create_example):
     response_model=schemas.MediaOut,
     response_model_exclude_none=True,
     summary="Obter mídia por ID",
-    responses={
-        404: {"model": ErrorResponse, "description": "Mídia não encontrada"},
-    },
+    responses={404: {"model": ErrorResponse, "description": "Mídia não encontrada"}},
 )
 def get_media(mid: int):
     db = get_db()
@@ -77,22 +77,52 @@ def list_media(
     "/{mid}",
     response_model=schemas.MediaOut,
     response_model_exclude_none=True,
-    dependencies=[Depends(require_api_key)],
-    summary="Atualizar mídia",
+    dependencies=[Depends(require_auth)],
+    summary="Atualizar mídia (total - PUT)",
     responses={
         401: {"model": ErrorResponse, "description": "Unauthorized"},
         404: {"model": ErrorResponse, "description": "Mídia não encontrada"},
         409: {"model": ErrorResponse, "description": "Conflito de integridade (UNIQUE/CHECK)"},
         422: {"model": ErrorResponse, "description": "Erro de validação"},
     },
+    openapi_extra={"requestBody": {"content": {"application/json": {"example": create_example}}}},
 )
-def update_media(mid: int, m: schemas.MediaIn = create_example):
+def update_media(mid: int, m: schemas.MediaIn):
     db = get_db()
-    return media_model.update(db, mid, m)
+    return media_model.update_full(db, mid, m)
+
+@router.patch(
+    "/{mid}",
+    response_model=schemas.MediaOut,
+    response_model_exclude_none=True,
+    dependencies=[Depends(require_auth)],
+    summary="Atualizar mídia (parcial - PATCH)",
+    responses={
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        404: {"model": ErrorResponse, "description": "Mídia não encontrada"},
+        409: {"model": ErrorResponse, "description": "Conflito de integridade (UNIQUE/CHECK)"},
+        422: {"model": ErrorResponse, "description": "Erro de validação"},
+    },
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "application/json": {
+                    "example": {
+                        "title": "Novo título apenas",
+                        "line_id": 2
+                    }
+                }
+            }
+        }
+    },
+)
+def patch_media(mid: int, m: schemas.MediaIn):
+    db = get_db()
+    return media_model.patch(db, mid, m)
 
 @router.delete(
     "/{mid}",
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_auth)],
     summary="Excluir mídia",
     responses={
         200: {"description": "OK"},

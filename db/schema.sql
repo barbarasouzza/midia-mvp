@@ -1,5 +1,16 @@
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS "user" (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin','user')) DEFAULT 'user',
+  person_id INTEGER,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_user_username ON "user"(username);
+
 CREATE TABLE IF NOT EXISTS person (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -9,8 +20,11 @@ CREATE TABLE IF NOT EXISTS person (
 
 CREATE TABLE IF NOT EXISTS line (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
+  name TEXT NOT NULL UNIQUE,
+  system_id INTEGER,
+  FOREIGN KEY (system_id) REFERENCES system(id) ON DELETE SET NULL
 );
+CREATE INDEX IF NOT EXISTS idx_line_system ON line(system_id);
 
 CREATE TABLE IF NOT EXISTS system (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
